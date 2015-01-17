@@ -1,0 +1,104 @@
+x = read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data", header=FALSE);
+names(x) <- c("Sex","Length","Diameter","Height","Whole.Weight","Shucked.Weight","Viscera.Weight","Shell.Weight","Rings")
+
+x <- x[with(x, order(Sex, Shell.Weight, Rings)),]
+
+summary(x)
+
+hist(x$Shell.Weight, freq=FALSE)
+
+x$Age = x$Rings + 1.5
+y = x[x$Age > 10,]
+y = y[y$Shucked.Weight > median(x$Shucked.Weight),]
+
+boxplot(x$Age) 
+
+# 1a) Use the command “quantile” to find the deciles (10 groups) for height from the complete data set.
+q = quantile(x$Height,seq(0,1,0.1))
+q
+
+# 1b) Use the command “cut” to assign each height value to the corresponding decile
+x$Height <- as.numeric(x$Height)
+x$Height.dec <- cut(x$Height, breaks = q)
+
+# 1c) Create a table of age vs. height decile. There is a general correlation that the older the abalone, the taller the height
+table(x$Age, x$Height.dec)
+
+# 1di) Use the commands “unique” and “sort” to find the unique values of Age and store the values in ascending order to a variable named “ua”.
+ua <- sort(unique(x$Age))
+ua
+
+# 1dii) Use the command “sapply” to apply a function to each value in “ua”. The function should return the mean whole weight of all abalone of a given age.
+average.weight <- function(age) mean(x[x$Age==age,]$Whole.Weight)
+mw <- sapply(ua, average.weight)
+
+# 1diii) Use the “plot” command to plot mean weight vs. age. Similarly to our previous table of age and height, the older the abalone, the heavier, until they reach
+# maturity at about 13, at which point the weight evens out a bit. As the abalone get towards the end of their average life span, the population is going to go down, 
+# which will skew results and may explain the variance within the 25+ age range
+
+plot(mw ~ ua, t = "b")
+
+#2)
+rm(list=ls())
+cat("\014")
+
+weather.data <- read.csv("C:/Users/jurgenpa/Downloads/weather_data_2000_2014.csv", header = TRUE)
+
+# 2a) Using summary statistics, histograms, boxplots, or other means identify and describe at least one data quality issue in the dataset.
+summary(weather.data)
+hist(weather.data$Temp..F.)
+hist(weather.data$Rain..inch.)
+hist(weather.data$Wind.Direct)
+hist(weather.data$Speed..knot.)
+hist(weather.data$Gust..knot.)
+hist(weather.data$Radiation..Watts.m.2.)
+
+boxplot(weather.data$Temp..F.)
+boxplot(weather.data$Rain..inch.)
+boxplot(weather.data$Wind.Direct)
+boxplot(weather.data$Speed..knot.)
+boxplot(weather.data$Gust..knot.)
+boxplot(weather.data$Radiation..Watts.m.2.)
+rows.before <- nrow(weather.data) 
+
+# Temperature, RHumidity, Wind, Speed, Gust, Radiation, and Rain inches seem to have incorrect data. Temperature ranges from -99999 to 9596,
+# RHumidity has a minimum of -99999, and rain in inches has a maximum of 1833.3. Wind, Speed, Gust, and Radiation have extreme outliers for their maximums
+
+# 2b) Filter the data to remove the questionable data you identified in part a
+
+weather.data <- weather.data[weather.data$Temp..F. > 0 & weather.data$Temp..F. < 110,]
+weather.data <- weather.data[weather.data$Rain..inch. < 100,]
+weather.data <- weather.data[weather.data$Wind.Direct < 100,]
+weather.data <- weather.data[weather.data$Speed..knot. < 100,]
+weather.data <- weather.data[weather.data$Gust..knot. < 100,]
+weather.data <- weather.data[weather.data$Radiation..Watts.m.2. < 5000,]
+rows.after <- nrow(weather.data)
+
+# Removing the temperature outlier also removed our RHumidity outlier. Upper bounds were found from the histograms and boxplots in part 2a
+# Filtering out this data took our row count from 6992901 to 1841015, for a difference of 5151886
+
+
+# 2c) c.  Look for and describe a monthly trend in the data.
+
+names(weather.data)
+
+plot(weather.data$Month ~ weather.data$RHum....)
+
+plot(weather.data$Month ~ weather.data$Temp..F.)
+
+plot(weather.data$Month ~ weather.data$Wind.Direct)
+
+plot(weather.data$Month ~ weather.data$Speed..knot.)
+
+plot(weather.data$Month ~ weather.data$Gust..knot.)
+
+plot(weather.data$Month ~ weather.data$Rain..inch.)
+
+plot(weather.data$Month ~ weather.data$Radiation..Watts.m.2.)
+
+plot(weather.data$Month ~ weather.data$Pres.mbar.)
+
+# Plotting each column with the month reveals that Temperature, RHum, Speed, Gust, Rain, 
+# Radiation, and Pres.mbar have trends within the months
+
+
