@@ -1,0 +1,213 @@
+#Rob Ford (rford27)
+#01/19/2015
+
+
+##QUESTION 1. Abalone Data
+
+# Clear Workspace
+rm(list=ls())
+# Clear Console:
+cat("\014")
+
+#Load the Data from UCI Repository
+
+x = read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data",header=FALSE)
+#head(x)
+names(x) <- c("sex","length","diameter","height","whole_wt","shucked_wt","visera_wt","shell_wt","rings")
+data <- x
+summary(data)
+
+#Add a new feature named "age"
+data$age <-  data$rings  +  1.5
+head(data)
+
+#sort by height,length,rings
+data = data[with(data,order(height,length,rings)),]
+head(data)
+
+# 1.a
+# Use the command “quantile” to find the deciles (10 groups) for height
+decile.breaks <- quantile(data$height,prob=seq(0, 1, length=11))
+decile.breaks
+
+# 1.b
+# b. Use the command “cut” to assign each height value to the corresponding decile
+height.deciles <- as.numeric(cut(x=data$height, breaks=decile.breaks))
+height.deciles
+
+# 1.c
+# Now create a table of age vs. height decile. Examine the table and describe what you observe.
+age_vs_height <- data.frame(table(data$age,height.deciles))
+names(age_vs_height) <- c("age","height_dc","freq")
+age_vs_height
+# Height and age are positively correlated, the older the abalone the greater the number in higher deciles.
+# they tend to enter decile 1 after 6.5 years and continue to increase over 6 years to decile 8 with some 
+# 9's and 10's at 12.5 years. 
+
+# 1.d.i
+# Use the commands “unique” and “sort” to find the unique values of Age and store the values in ascending order to a
+# variable named “ua”.
+ua <- sort(unique(data$age))
+ua
+
+# 1.d.ii
+# Use the command “sapply” to apply a function to each value in “ua”.
+getMean <- function(single.age){
+  mean(with(data, whole_wt[age == single.age]))
+}
+avg_wts_by_age <- sapply(X=ua,FUN=getMean)
+
+# 1.d.iii
+# Finally, use the “plot” command to plot mean weight vs. age.Describe the relationship revealed by the plot. 
+# Include an explanation for the behavior seen in the abalone of the 25-30 year age group.
+plot(avg_wts_by_age, ua, xlab="Avg Wts", ylab="Age")
+abline(h = 25,col="green")
+abline(h = 30, col="green")
+
+# There is large range in avg weights in the 25-30 year range, many averaging in the 1.25-1.5 range 
+# with others averaging 1.8+ range.It may have something to do with their reproductive cycle so I compare Male and Female
+# however both sexes appear to gain a similar amount of weight in the 25-30 year range, maybe they're spawning: 
+
+#Take a look at the female specimens
+data_F <- data.frame(subset(data,sex=="F"))
+head(data_F)
+
+ua_F <- sort(unique(data_F$age))
+ua_F
+
+getMean_F <- function(single.age.F){
+  mean(with(data_F, whole_wt[age == single.age.F]))
+}
+avg_wts_by_age_F <- sapply(X=ua_F,FUN=getMean)
+
+plot(avg_wts_by_age_F, ua_F, xlab="Avg Wts F", ylab="Age F")
+abline(h = 25,col="pink")
+abline(h = 30, col="pink")
+
+#Take a look at the male specimens
+data_M <- data.frame(subset(data,sex=="M"))
+head(data_M)
+
+ua_M <- sort(unique(data_M$age))
+ua_M
+
+getMean_M <- function(single.age.M){
+  mean(with(data_M, whole_wt[age == single.age.M]))
+}
+avg_wts_by_age_M <- sapply(X=ua_M,FUN=getMean)
+
+plot(avg_wts_by_age_M, ua_M, xlab="Avg Wts M", ylab="Age M")
+abline(h = 25,col="blue")
+abline(h = 30, col="blue")
+
+##QUESTION 2. Weather Data
+
+# Clear Workspace
+rm(list=ls())
+# Clear Console
+cat("\014")
+
+#Load the data into a data table from local files because it's large
+#First remove the current version
+remove.packages("data.table")      
+#Install the CRAN version
+install.packages("data.table")        
+library(data.table)
+
+weather_data_2000_2014 <- read.csv("~/UW Data Science 350 Methods/weather_data_2000_2014.csv")
+
+#Function that cleans up names
+clean_names <- function (name) {
+  name <- tolower(name)
+  name <- gsub(pattern = "[^[:alpha:]]", replacement = " ",x = name)
+  name <- strsplit(x = name, split = " ")[[1]][1]
+  return (name)
+}
+
+#Clean up the names
+setnames(x=weather_data_2000_2014,
+         old=names(weather_data_2000_2014),
+         new=sapply(names(weather_data_2000_2014), FUN=clean_names, USE.NAMES=F))
+
+# 2.a.
+# Using summary statistics, histograms, boxplots, or other means identify and describe at least one data quality issue in the dataset.
+
+# Checking humidity, temperature
+summary(weather_data_2000_2014,)
+# The min RHumidity -99999.00, min/max temparatures -99999.00 and 9596.00 are outliers that will skew the analysis
+# if not corrected or otherwise trimmed they prevent a good evaluation of the data.
+
+boxplot(temp~rain,data=weather_data_2000_2014,main="Rain and Temprature",xlab="Rain",ylab="Temp")
+# The box-plot shows how the outliers interfere with the boxplot evaluation.  They make the box invisible so you can't see the mean and quartiles.
+
+hist(weather_data_2000_2014$temp,xlab="Temp")
+# Extreme values are preventing a histogram from showing anything between the Min. -99999.00 and the Max. 9596.00
+
+#shorten the name of the dataset for convenience
+data <- weather_data_2000_2014
+
+# 2.b.
+# Filter the data to remove the questionable data you identified in part
+# 2.b.i. How much of the data is affected?
+
+# Getting length before transformation
+rows.before <- nrow(weather_data_2000_2014)
+#6,992,901
+
+# Applying transformation
+cleaned.data <- weather_data_2000_2014[data$temp > -50 & data$temp < 120, ]
+summary(cleaned.data)
+# Getting length after transformation
+rows.after <- nrow(cleaned.data)
+#6,991,958
+
+# Calculating instances lost
+rows.lost <- rows.before - length.after
+rows.lost
+percentage.lost <- rows.lost / rows.before
+percentage.lost
+# 943 Instances were affected by the transformation,
+# which is .0135% of the data
+
+# Now the summary, boxplot and histogram quartiles, mean are legible.
+summary(cleaned.data,)
+boxplot(temp~rain,cleaned.data,main="Rain and Temp",xlab="Rain",ylab="Temp")
+hist(cleaned.data$temp,xlab="Temp")
+
+# Clean up the other outliers
+
+cleaned.data <- cleaned.data[cleaned.data$temp > 0 & cleaned.data$temp < 110,]
+
+cleaned.data <- cleaned.data[cleaned.data$rain < 100,]
+
+cleaned.data <- cleaned.data[cleaned.data$wind < 100,]
+
+cleaned.data <- cleaned.data[cleaned.data$speed < 100,]
+
+cleaned.data <- cleaned.data[cleaned.data$gust < 100,]
+
+cleaned.data <- cleaned.data[cleaned.data$radiation < 5000,]
+
+# 2.c.
+# Look for and describe a monthly trend in the data.
+names(cleaned.data)
+
+plot(cleaned.data$month ~ cleaned.data$rhum,xlab="rhum",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$temp,xlab="temp",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$wind,xlab="wind",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$speed,xlab="speed",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$gust,xlab="gust",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$rain,xlab="rain",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$radiation=,xlab="radiation",ylab="month")
+
+plot(cleaned.data$month ~ cleaned.data$pres,xlab="pres",ylab="month")
+
+summary(cleaned.data)
+
+#There are clear monthly trends expressed as plotted ranges here.
