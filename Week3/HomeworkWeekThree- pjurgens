@@ -1,0 +1,58 @@
+rm(list=ls())
+cat("\014")
+
+birth.data = read.csv("C:/Users/jurgenpa/Downloads/Data Science Quarter 2/birthDataDays.csv")
+
+# A mother's due date is calculated to be the 280th day of pregnancy. 
+# Based on this data set, what is the probability of a baby being born 24 or more days early?
+
+prob24DaysOrEarlier = (length(which(birth.data$First <= 256)) + length(which(birth.data$Second <= 256))) / (2*nrow(birth.data))
+prob24DaysOrEarlier
+
+#.04167
+
+# How might the use of this data set bias the result from the last question?
+
+# This data set only includes women who have had at least 2 children. 
+# The birth of the second child from the same mother could be affected by the pregnancy length of the first child, 
+# and thus our data set is biased.
+
+# Suppose that you now learn that the baby in question is a second child. 
+# Now what is the probability of our baby being born 24 or more days early?
+
+prob24DaysOrEarlierSecond = (length(which(birth.data$Second <= 256))) / nrow(birth.data)
+prob24DaysOrEarlierSecond
+
+#.0375
+
+# Furthermore, the first child was late. 
+# Now that you also know that, what is the probability of the baby being born 24 or more days early?
+
+lateFirst = birth.data[birth.data$First > 280,]
+probLateFirst24DaysOrEarlierSecond = length(which(lateFirst$Second <= 256))/ nrow(lateFirst)
+
+probLateFirst24DaysOrEarlierSecond
+
+#.01442
+
+# Does the length of a pregnancy for a first child 
+# follow the same distribution as the length for the second child?
+
+qqplot(birth.data$First, birth.data$Second)
+abline(0,1,col="red")
+
+# Yes, the distributions are fairly similar
+
+# Is the length of a pregnancy for a first child independent of the length for the second child?
+
+t.test(birth.data$First, birth.data$Second)
+
+# Null hypothesis: The length of a pregnancy for a first child is independent of the length for the second child
+# Alternative hypothesis: The length of a pregnancy for a first child is not independent of the length for the second child
+# The results of the t-test give a p-value of .3033, and we reject the null hypothesis.
+# Thus, the length of a pregnancy for a first child is not independent of the length for the second child.
+
+
+
+
+
