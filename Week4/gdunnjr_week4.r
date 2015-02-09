@@ -74,7 +74,7 @@ t.test(birthdays$First,birthdays$Second)
 # Read in data obtained from link
 
 # read the data
-resultsVsSpread <- read.csv("WinsVsSpread.csv", header=TRUE, stringsAsFactors=FALSE)
+resultsVsSpread <- read.csv("gdunnjr_week4_WinsVsSpread.csv", header=TRUE, stringsAsFactors=FALSE)
 
 
 table(resultsVsSpread$Spread.3Result)
@@ -106,13 +106,13 @@ x2 = table(vResults,vResultPred)
 # run the test
 chisq.test(x2)
 
-# results - 59% probability to support the null hypothesis that the random spread results and the actual spread < 3 points results
+# results - 85% probability to support the null hypothesis that the random spread results and the actual spread < 3 points results
 #   are independent of each other. Meaning that the spread < 3 points prediction are not random and are more accurate.
 #
 # Pearson's Chi-squared test with Yates' continuity correction
 #
 # data:  x2
-# X-squared = 0.2875, df = 1, p-value = 0.5918
+# X-squared = 0.0321, df = 1, p-value = 0.8577
 
 
 
