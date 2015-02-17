@@ -1,0 +1,95 @@
+rm(list=ls())
+cat("\014")
+
+bike.data = read.csv("C:\\Users\\jurgenpa\\Downloads\\Data Science Quarter 2\\Week 5\\hour.csv")
+
+# 1) Transform the "dteday" variable into a date/time object using the strptime function, 
+# and create a new feature in the dataset that represents the day of the week. 
+
+bike.data$dteday = strptime(bike.data$dteday, "%Y-%m-%d")
+bike.data$dayofweek= as.POSIXlt(bike.data$dteday)$wday
+
+# 2) Gather the total number of riders in each category and for each day of the week into a contingency table.
+
+casualRidersMonday = bike.data[bike.data$dayofweek == 1,]
+sumCasualRidersMonday= sum(casualRidersMonday$casual)
+casualRidersTuesday = bike.data[bike.data$dayofweek == 2,]
+sumCasualRidersTuesday= sum(casualRidersTuesday$casual)
+casualRidersWednesday = bike.data[bike.data$dayofweek == 3,]
+sumCasualRidersWednesday= sum(casualRidersWednesday$casual)
+casualRidersThursday = bike.data[bike.data$dayofweek == 4,]
+sumCasualRidersThursday= sum(casualRidersThursday$casual)
+casualRidersFriday = bike.data[bike.data$dayofweek == 5,]
+sumCasualRidersFriday= sum(casualRidersFriday$casual)
+casualRidersSaturday = bike.data[bike.data$dayofweek == 6,]
+sumCasualRidersSaturday= sum(casualRidersSaturday$casual)
+casualRidersSunday = bike.data[bike.data$dayofweek == 7,]
+sumCasualRidersSunday= sum(casualRidersSunday$casual)
+
+registeredRidersMonday = bike.data[bike.data$dayofweek == 1,]
+sumRegisteredRidersMonday= sum(registeredRidersMonday$registered)
+registeredRidersTuesday = bike.data[bike.data$dayofweek == 2,]
+sumRegisteredRidersTuesday= sum(registeredRidersTuesday$registered)
+registeredRidersWednesday = bike.data[bike.data$dayofweek == 3,]
+sumRegisteredRidersWednesday= sum(registeredRidersWednesday$registered)
+registeredRidersThursday = bike.data[bike.data$dayofweek == 4,]
+sumRegisteredRidersThursday= sum(registeredRidersThursday$registered)
+registeredRidersFriday = bike.data[bike.data$dayofweek == 5,]
+sumRegisteredRidersFriday= sum(registeredRidersFriday$registered)
+registeredRidersSaturday = bike.data[bike.data$dayofweek == 6,]
+sumRegisteredRidersSaturday= sum(registeredRidersSaturday$registered)
+registeredRidersSunday = bike.data[bike.data$dayofweek == 7,]
+sumRegisteredRidersSunday= sum(registeredRidersSunday$registered)
+
+casualRow = cbind(sumCasualRidersMonday, sumCasualRidersTuesday, sumCasualRidersWednesday, sumCasualRidersThursday, sumCasualRidersFriday, sumCasualRidersSaturday, sumCasualRidersSunday)
+registeredRow = cbind(sumRegisteredRidersMonday, sumRegisteredRidersTuesday, sumRegisteredRidersWednesday, sumRegisteredRidersThursday, sumRegisteredRidersFriday, sumRegisteredRidersSaturday, sumRegisteredRidersSunday)
+
+bikeTable = matrix(c(casualRow, registeredRow), nrow = 2, ncol = 7)
+bikeTable[,2] = registeredRow
+colnames(bikeTable) = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+rownames(bikeTable) = c("Casual", "Registered")
+
+bikeTable
+
+# Are rider category and day of week independent?
+
+# Null Hypothesis: The rider category and the day of week are independent.
+# Alternative Hypothesis: The rider category and the day of week are not independent.
+chisq.test(bikeTable)
+
+# Our p-value is very small and far below our significance level for testing, thus we reject the null hypothesis.
+# This suggests there is a dependence between the rider category and the day of the week.
+
+# 3) Consider the distribution of registered user rides for each day of the week. 
+# Is it the same as the distribution of casual user rides for each day of the week?
+
+# Null Hypothesis: The distribution of casual riders and registered riders for each day of the week is the same
+# Alternative Hypothesis: The distribution of casual riders and registered riders for each day of the week is not the same
+
+ks.test(casualRow, registeredRow)
+
+# Our p-value is 0.01168, thus we can reject the null hypothesis and the distribution of casual riders and 
+# registered riders for each day of the week is not the same
+
+# 4) On average, do more people ride on the weekends or on weekdays?
+
+weekdayRiders = rbind(sumCasualRidersMonday,sumCasualRidersTuesday,sumCasualRidersWednesday,sumCasualRidersThursday,sumCasualRidersFriday,sumRegisteredRidersMonday,sumRegisteredRidersTuesday,sumRegisteredRidersWednesday,sumRegisteredRidersThursday,sumRegisteredRidersFriday)
+weekendRiders = rbind(sumCasualRidersSaturday,sumCasualRidersSunday,sumRegisteredRidersSaturday,sumRegisteredRidersSunday)
+
+weekTable = rbind(weekdayRiders, weekendRiders)
+
+# Null Hypothesis: The difference in means between weekend and weekday riders is zero.
+# Alternative Hypothesis: The difference in means between weekend and weekday riders is greater than zero.
+
+t.test(weekdayRiders, weekendRiders, alternative = "greater")
+
+# Our p-value is 0.1318, thus we fail to reject the null hypothesis. I think something is wrong here, but I'm not sure what.
+
+# 5) Is it reasonable to apply a t-test in answering question 4?
+# Yes. The t-test compares the means of distributions, which is what we are being asked to do in this question.
+
+
+
+
+
+
