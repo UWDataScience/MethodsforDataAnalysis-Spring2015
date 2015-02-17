@@ -1,0 +1,80 @@
+---
+title: "Homework 5"
+author: "Beth Britt"
+date: "February 17, 2015"
+output: html_document
+---
+
+Week 5 Assignment
+The data set for this assignment is here: http://archive.ics.uci.edu/ml/datasets/Bike+Sharing+Dataset It contains information about a bike sharing program. The data describe date, time, weather, and ridership. 
+There are two kinds of participants in the dataset: casual and registered. Let's consider the ridership in each category as a function of the day of the week and find out if the rider category and day of the week are independent. 
+
+```{r}
+rm(list=ls()) # clear workspace
+cat("\014") # Clear Console
+
+BikeDays <- read.csv("Bike-Sharing-Dataset/day.csv")
+BikeHours <- read.csv("Bike-Sharing-Dataset/hour.csv")
+```
+
+1.  Transform the "dteday" variable into a date/time object using the strptime function, and create a new feature in the dataset that represents the day of the week. The function strptime produces a result of type POSIXlt. It is a list, and one of its elements is named "wday": the day of the week in numeric form. (You'll notice that there is already a column in the dataset called "weekday". This exercise is for you to practice manipulating dates in R. Your solution should correspond to this column.)
+
+```{r}
+ BikeDays$dayofweek <- as.POSIXlt(strptime(BikeDays$dteday, "%Y-%m-%d"))$wday
+ BikeHours$dayofweek <- as.POSIXlt(strptime(BikeHours$dteday, "%Y-%m-%d"))$wday
+
+```
+
+2.	Gather the total number of riders in each category and for each day of the week into a contingency table. Are rider category and day of week independent (use a hypothesis test)?
+```{r}
+
+DateTable <- matrix(ncol=2,nrow=7)
+for(i in 0:6)
+  {
+  DateTable[i+1, 1] <- sum(BikeDays[BikeDays$dayofweek==(i),]$casual)
+  DateTable[i+1, 2] <- sum(BikeDays[BikeDays$dayofweek==(i),]$registered)
+  }
+rownames(DateTable) <- c("Sun","Mon","Tue","Wed","Thu","Fri","Sat")
+colnames(DateTable) <- c("Casual","Registered")
+DateTable
+chisq.test(DateTable)
+
+```
+ANSWER 2:  Our null hypothesis is that rider category and day of week are independent.  The resulting p-value is very small (the smallest number represented in R), therefore we reject the null hypothesis, and instead conclude that there is likely dependency between the day of the week and the type of rider.
+
+
+3.	Consider the distribution of registered user rides for each day of the week. Is it the same as the distribution of casual user rides for each day of the week (use a hypothesis test)?
+```{r, echo=FALSE}
+#qqplot(BikeDays$casual, BikeDays$registered) -- first I tried this approach, but realized that it did not take into consideration the days of week
+# so decided to use my matrix table from above instead
+qqplot(DateTable[,'Casual'],DateTable[,'Registered'])
+
+# Use the Kolmogorov-Smirnov test to compare two distributions.  NULL hypothesis is that the distribution of registered user rides is the same as the distribution of casual user rides.
+
+#ks.test(BikeDays$casual, BikeDays$registered, alternative = "two.sided") -- first approach
+ks.test(DateTable[,'Casual'],DateTable[,'Registered'])
+
+```
+ANSWER 3:  p-value is very small, so we can reject the null hypothesis.  The distributions are not the same.  
+
+
+4.	On average, do more people ride on the weekends or on weekdays (use a hypothesis test)? This refers to the total number of rides per day, registered and casual.
+```{r}
+
+weekdays <- BikeHours[BikeHours$dayofweek > 0 & BikeHours$dayofweek < 6,]$cnt
+weekends <- BikeHours[BikeHours$dayofweek == 0 | BikeHours$dayofweek == 6,]$cnt
+summary(weekdays)
+summary(weekends)
+t.test(weekdays, weekends)
+
+```
+ANSWER 4:  There is a statistically significant difference in the averages - more people ride on weekdays.
+
+
+5.	Is it reasonable to apply a t-test in answering question 4? 
+ANSWER 5:  Question 4 asks to compare averages, so yes it is appropriate to use t-test.
+
+```{r}
+
+```
+
