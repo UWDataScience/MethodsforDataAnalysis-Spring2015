@@ -1,0 +1,82 @@
+---
+title: "Hwrk 5"
+author: "Gabriel Ramirez"
+date: "02/17/2015"
+output: html_document
+---
+
+# Week 5 Assignment 
+```{r}
+# Reading primary data
+data <- read.csv("Bike-Sharing-Dataset/day.csv", stringsAsFactors=FALSE)
+```
+
+#### Problem 1
+Transform the "dteday" variable into a date/time object using the strptime function, and create a new feature in the dataset that represents the day of the week. The function strptime produces a result of type POSIXlt. It is a list, and one of its elements is named "wday": the day of the week in numeric form. (You'll notice that there is already a column in the dataset called "weekday". This exercise is for you to practice manipulating dates in R. Your solution should correspond to this column.)
+
+#### Solution 1
+```{r}
+# Transform into POSIXct
+data$dteday <- strptime(x = data$dteday, format = "%Y-%m-%d")
+data$wday <- weekdays(data$dteday)
+```
+
+#### Problem 2
+Gather the total number of riders in each category and for each day of the week into a contingency table. Are rider category and day of week independent (use a hypothesis test)?
+
+#### Solution 2
+```{r}
+con.table <- aggregate(
+    x = data[,c("registered", "casual")], 
+    by=list(data$wday), FUN=sum, na.rm=TRUE)
+
+chisq.test(con.table[,c('registered', 'casual')])
+```
+With a p-value of 2.2e-16 we reject the null hypothesis that the rider category and day of week are independent
+
+#### Problem 3
+Consider the distribution of registered user rides for each day of the week. Is it the same as the distribution of casual user rides for each day of the week (use a hypothesis test)?
+
+#### Solution 3
+
+```{r}
+# Kolmogorov-Smirnov test to determine if two samples come from the same distribution
+ks.test(con.table$registered, con.table$casual)
+```
+With a p-value of less than .05 we reject the null hypothesis that two datasets come from the same distrubtion. 
+
+#### Problem 4
+On average, do more people ride on the weekends or on weekdays (use a hypothesis test)? This refers to the total number of rides per day, registered and casual.
+
+#### Solution 4
+```{r}
+# Making data nicer to look at (would not do if dataset was very large)
+data$workingday <- with(data, ifelse(test = workingday == 1, yes = "weekday", no = "weekend"))
+data$both <- with(data = data, expr = casual + registered)
+# Running T-test with null hypothsis that people do not ride more on weekend 
+t.test(data[data$workingday == "weekend", c('both')],
+       data[data$workingday == "weekday", c('both')],
+      alternative = 'greater')
+```
+With a p-value of over .05, we cannot reject the null hypothesis that people do not ride more on weekends.
+
+#### Problem 5
+Is it reasonable to apply a t-test in answering question 4? 
+
+#### Solution 5
+Yes applying a t-test is reasonable because the a t-test is used to test differences between two population means. Additionally, the samples meet the assumption of normality. 
+
+```{r}
+u <- mean(data[data$workingday == "weekend", c('both')])
+sd <- sd(data[data$workingday == "weekend", c('both')])
+num <- length(data[data$workingday == "weekend", c('both')])
+weekend.dist <- rnorm(n = num, mean = u, sd = sd)
+ks.test(weekend.dist, data[data$workingday == "weekend", c('both')])
+
+u <- mean(data[data$workingday == "weekend", c('both')])
+sd <- sd(data[data$workingday == "weekend", c('both')])
+num <- length(data[data$workingday == "weekend", c('both')])
+weekend.dist <- rnorm(n = num, mean = u, sd = sd)
+ks.test(weekend.dist, data[data$workingday == "weekend", c('both')])
+```
+Based on the Kolmogorov-Smirnov test, it appears that we cannot reject the null hypothesis that these two samples come from the same normal distribution. 
